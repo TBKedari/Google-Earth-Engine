@@ -1,0 +1,56 @@
+//FCC
+
+// var roi =
+var startDate = '2022-01-01'
+var endDate = '2023-03-01'
+var exportName = 'Nagpur' 
+
+
+var sentinel2 = ee.ImageCollection('COPERNICUS/S2_HARMONIZED')
+    .filterBounds(roi)
+    .filterDate(startDate, endDate)
+    .filter(ee.Filter.lt('CLOUDY_PIXEL_PERCENTAGE', 10));
+    
+  // Function to apply cloud masking
+  var applyCloudMask = function(image) {
+    var cloudMask = image.select('QA60');
+    var opaqueCloudBit = 1 << 10;
+    var cirrusCloudBit = 1 << 11;
+    var mask = cloudMask.bitwiseAnd(opaqueCloudBit).eq(0)
+                  .and(cloudMask.bitwiseAnd(cirrusCloudBit).eq(0));
+    return image.updateMask(mask);
+  };
+
+  // Apply cloud masking to the collection
+  sentinel2 = sentinel2.map(applyCloudMask);
+
+  // Select bands for the false color composite (B5: Red, B3: Green, B2: Blue)
+  var bands = ['B8', 'B4', 'B3'];
+  var vizParams = {
+    bands: bands,
+    min: 0,
+    max: 3000,
+    gamma: [0.95, 1.1, 1]
+  };
+
+  var meanImage = sentinel2.mean();
+  
+  var clippedImage = meanImage.select(bands);
+
+  // Display the False Color Composite
+  Map.addLayer(meanImage.clip(roi), vizParams, exportName + '_FCC');
+
+    // Export the NDVI
+  Export.image.toDrive({
+    image: clippedImage.toFloat().clip(roi),
+    description: exportName + '_' + startDate + '_' + endDate + '_fcc',
+    scale: 10, // Adjust the scale as needed (in meters)
+    region: roi,
+    crs: 'EPSG:32644',
+    folder: "FCC",
+    maxPixels: 1e13
+  });
+  
+Map.centerObject(roi, 11);
+
+

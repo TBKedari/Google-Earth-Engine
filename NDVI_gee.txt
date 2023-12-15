@@ -1,0 +1,50 @@
+//NDVI
+
+// var roi = 
+var startDate = '2022-12-01';
+var endDate = '2023-01-01';
+var exportName = 'Nagpur';
+
+
+var sentinel2Collection = ee.ImageCollection('COPERNICUS/S2_HARMONIZED')
+    .filterBounds(roi)
+    .filterDate(startDate, endDate);
+
+// Function to calculate NDVI
+function calculateNDVI(image) {
+  var ndvi = image.normalizedDifference(['B8', 'B4']).rename('NDVI');
+  return ndvi;
+}
+
+// Map the calculateNDVI function over the image collection
+var ndviCollection = sentinel2Collection.map(calculateNDVI);
+
+// Calculate the maximum NDVI from the filtered NDVI collection
+var NDVI = ndviCollection.mean();
+
+
+// Visualization parameters for NDVI
+var ndviVizParams = {
+  min: -0.3,
+  max: 0.9,
+  palette: ['#d7191c', '#fdae61','#ffffc0', '#a6d96a',  '#1a9641']
+};
+
+// Add the maximum NDVI image to the map
+Map.addLayer(NDVI.clip(roi), ndviVizParams, startDate + 'NDVI');
+Map.centerObject(roi, 10);
+
+
+///////=============================
+  // Export the NDVI
+  Export.image.toDrive({
+    image: NDVI.toFloat().clip(roi),
+    description: exportName + '_' + startDate + '_' + endDate + '_NDVI',
+    scale: 10, // Adjust the scale as needed (in meters)
+    region: roi,
+    crs: 'EPSG:32644',
+    folder: "NDVI",
+    maxPixels: 1e13
+  });
+
+Map.centerObject(roi, 11);
