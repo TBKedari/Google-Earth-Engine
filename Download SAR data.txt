@@ -1,0 +1,18 @@
+var data = ee.ImageCollection('COPERNICUS/S1_GRD')
+        .filter(ee.Filter.listContains('transmitterReceiverPolarisation', 'VV'))
+        .filter(ee.Filter.eq('instrumentMode', 'IW'))
+        .select('VV')
+        .filter(ee.Filter.bounds())
+        
+var image = data.filterDate('2021-07-16','2021-07-31')
+
+
+
+
+Map.addLayer(image)
+
+Export.image.toDrive({
+  image:image.mean(),
+  description:'Flood Image',
+  scale:100,
+})
