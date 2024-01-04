@@ -1,0 +1,37 @@
+
+
+// Load Sentinel-2 image collection
+var sentinel2 = ee.ImageCollection('COPERNICUS/S2')
+                  .filterBounds(roi)
+                  .filterDate('2023-04-01', '2023-05-31').median(); // specify the date range
+                  // take the median value of images
+
+// Selecting bands required for calculation
+var blue = sentinel2.select('B2');  // Blue band
+var green = sentinel2.select('B3'); // Green band
+var red = sentinel2.select('B4');   // Red band
+var nir = sentinel2.select('B8');   // Near Infrared band
+
+// Calculating Soil Salinity Index (SI_A)
+var SI_A = blue.subtract(red).divide(blue.add(red))
+  .multiply(blue.multiply(red).divide(green).multiply(red.multiply(nir).divide(green)))
+  .divide(blue.multiply(red).divide(green));
+
+// Display the calculated index
+Map.addLayer(SI_A.clip(roi), {min: -1, max: 1, palette: ['blue', 'white', 'green']}, 'Soil Salinity Index (SI_A)');
+
+// Load Sentinel-2 image collection
+var sentinel2 = ee.ImageCollection('COPERNICUS/S2')
+                  .filterBounds(roi) // Replace 'roi' with your region of interest
+                  .filterDate('2023-01-01', '2023-12-31') // specify the date range
+                  .median(); // take the median value of images
+
+// Selecting Short-Wave Infrared bands (SWIR1 and SWIR2)
+var swir1 = sentinel2.select('B11'); // SWIR1 band
+var swir2 = sentinel2.select('B12'); // SWIR2 band
+
+// Calculating Soil Salinity Index
+var SI = swir1.subtract(swir2).divide(swir1.add(swir2));
+
+// Display the calculated index
+Map.addLayer(SI.clip(roi), {min: -1, max: 1, palette: ['blue', 'white', 'green']}, 'Soil Salinity Index');
