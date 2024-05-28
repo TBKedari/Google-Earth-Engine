@@ -1,0 +1,26 @@
+var dataset: Table 
+// Map.addLayer(dataset, {}, "India State");
+var AHMADNAGAR = dataset.filter(ee.Filter.eq('DISTRICT', 'AHMADNAGAR'));
+// Display the district on the map
+Map.addLayer(AHMADNAGAR, {}, 'AHMADNAGAR');
+// Load ALOS World 3D (AW3D) DEM
+var alosDem = ee.Image('JAXA/ALOS/AW3D30_V1_1')
+  .select('MED')
+  .clip(AHMADNAGAR);  // Clip to the Ahmednagar area
+
+// Display the ALOS DEM on the map
+Map.addLayer(alosDem, {min: 0, max: 3000, palette: ['000000', 'ffffff']}, 'ALOS DEM');
+
+// Set map center and zoom level
+Map.centerObject(AHMADNAGAR, 10);
+
+// Export ALOS DEM to your Google Drive as a GeoTIFF
+Export.image.toDrive({
+  image: alosDem,
+  description: 'ALOS_DEM_AHMADNAGAR',
+  scale: 30, // Adjust the scale accordingly
+  maxPixels: 1e13,
+  region: AHMADNAGAR,
+  crs: 'EPSG:32643',
+  folder: 'Alos'
+});
