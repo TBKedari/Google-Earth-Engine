@@ -1,0 +1,25 @@
+// Load the Open Buildings Temporal V1 Image Collection
+var openBuildings = ee.ImageCollection('GOOGLE/Research/open-buildings-temporal/v1');
+
+// Define your area of interest (e.g., Nagpur, India)
+var nagpur = ee.Geometry.Point([79.0882, 21.1458]).buffer(5000); // 5 km buffer around Nagpur
+
+// Filter the collection for images intersecting the area of interest
+var buildingsNagpur = openBuildings.filterBounds(nagpur);
+
+// Select the 'building_presence' band and filter for a specific year, e.g., 2020
+var buildings2020 = buildingsNagpur
+  .filterDate('2020-01-01', '2020-12-31')
+  .select('building_presence')
+  .mosaic();
+
+// Define visualization parameters
+var visParams = {
+  min: 0,
+  max: 1,
+  palette: ['white', 'blue']
+};
+
+// Center the map on Nagpur and add the layer
+Map.centerObject(nagpur, 12);
+Map.addLayer(buildings2020, visParams, 'Building Presence 2020');
